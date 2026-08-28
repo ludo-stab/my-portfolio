@@ -1,4 +1,6 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0"> <title>Alex Morgan | Portfolio</title>
+<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Alex Morgan | Portfolio</title>
+
 <style>
     * {
         box-sizing: border-box;
@@ -13,6 +15,7 @@
         background: #f5f5f5;
     }
 
+    /* Navigation */
     header {
         background: #222;
         color: white;
@@ -36,18 +39,21 @@
         color: #61dafb;
     }
 
-    section {
+    /* Hero section */
+    .hero {
         max-width: 1000px;
+        min-height: 70vh;
         margin: auto;
         padding: 70px 20px;
+
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 50px;
     }
 
-    .hero {
-        min-height: 70vh;
-        display: flex;
-        flex-direction: column;
-        justify-content: center;
-        align-items: flex-start;
+    .hero-text {
+        flex: 1;
     }
 
     .hero h2 {
@@ -61,6 +67,21 @@
         max-width: 600px;
     }
 
+    /* Profile image */
+    .hero-image {
+        flex-shrink: 0;
+    }
+
+    .hero-image img {
+        width: 250px;
+        height: 250px;
+        object-fit: cover;
+        border-radius: 50%;
+        border: 5px solid white;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.15);
+    }
+
+    /* Button */
     .button {
         display: inline-block;
         margin-top: 25px;
@@ -75,11 +96,19 @@
         background: #444;
     }
 
-    h2.section-title {
+    /* General sections */
+    section:not(.hero) {
+        max-width: 1000px;
+        margin: auto;
+        padding: 70px 20px;
+    }
+
+    .section-title {
         font-size: 32px;
         margin-bottom: 25px;
     }
 
+    /* Projects */
     .projects {
         display: grid;
         grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -90,13 +119,14 @@
         background: white;
         padding: 25px;
         border-radius: 8px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
     }
 
     .project h3 {
         margin-bottom: 10px;
     }
 
+    /* Skills */
     .skills {
         display: flex;
         flex-wrap: wrap;
@@ -110,10 +140,12 @@
         border-radius: 20px;
     }
 
+    /* Contact */
     #contact {
         text-align: center;
     }
 
+    /* Footer */
     footer {
         text-align: center;
         background: #222;
@@ -121,7 +153,8 @@
         padding: 25px;
     }
 
-    @media (max-width: 600px) {
+    /* Mobile */
+    @media (max-width: 700px) {
         header {
             flex-direction: column;
             gap: 10px;
@@ -131,13 +164,29 @@
             margin: 0 8px;
         }
 
+        .hero {
+            flex-direction: column-reverse;
+            text-align: center;
+            padding-top: 50px;
+        }
+
+        .hero p {
+            margin: auto;
+        }
+
         .hero h2 {
             font-size: 36px;
+        }
+
+        .hero-image img {
+            width: 200px;
+            height: 200px;
         }
     }
 </style>
 
 </head> <body>
+<!-- Navigation -->
 <header>
     <h1>Alex Morgan</h1>
 
@@ -149,94 +198,128 @@
     </nav>
 </header>
 
-<main>
 
-    <section class="hero">
+<!-- Hero / Introduction -->
+<section class="hero">
+
+    <div class="hero-text">
         <h2>Hello, I'm Alex.</h2>
+
         <p>
             I'm a web developer and technology enthusiast who enjoys
             building simple, useful, and creative digital experiences.
         </p>
 
-        <a class="button" href="#projects">View My Work</a>
-    </section>
-
-    <section id="about">
-        <h2 class="section-title">About Me</h2>
-
-        <p>
-            I'm a developer with an interest in web development, software,
-            and technology. I enjoy learning new tools, solving problems,
-            and turning ideas into working projects.
-        </p>
-
-        <p style="margin-top: 15px;">
-            This portfolio is hosted using GitHub Pages as a demonstration
-            of a simple static website.
-        </p>
-    </section>
-
-    <section id="projects">
-        <h2 class="section-title">Projects</h2>
-
-        <div class="projects">
-
-            <div class="project">
-                <h3>Project One</h3>
-                <p>
-                    A sample web application created to demonstrate
-                    frontend development and responsive design.
-                </p>
-            </div>
-
-            <div class="project">
-                <h3>Project Two</h3>
-                <p>
-                    A small software project focused on solving a
-                    practical problem with a clean and simple interface.
-                </p>
-            </div>
-
-            <div class="project">
-                <h3>Project Three</h3>
-                <p>
-                    An experimental project built to explore new
-                    technologies and development techniques.
-                </p>
-            </div>
-
-        </div>
-    </section>
-
-    <section id="skills">
-        <h2 class="section-title">Skills</h2>
-
-        <div class="skills">
-            <span class="skill">HTML</span>
-            <span class="skill">CSS</span>
-            <span class="skill">JavaScript</span>
-            <span class="skill">Git</span>
-            <span class="skill">GitHub</span>
-            <span class="skill">Responsive Design</span>
-        </div>
-    </section>
-
-    <section id="contact">
-        <h2 class="section-title">Contact</h2>
-
-        <p>
-            Interested in working together? Feel free to reach out.
-        </p>
-
-        <a class="button" href="mailto:alex@example.com">
-            Email Me
+        <a class="button" href="#projects">
+            View My Work
         </a>
-    </section>
+    </div>
 
-</main>
+    <div class="hero-image">
+        <img src="profile.jpg" alt="Alex Morgan">
+    </div>
 
+</section>
+
+
+<!-- About -->
+<section id="about">
+
+    <h2 class="section-title">About Me</h2>
+
+    <p>
+        I'm a developer with an interest in web development, software,
+        and technology. I enjoy learning new tools, solving problems,
+        and turning ideas into working projects.
+    </p>
+
+    <p style="margin-top: 15px;">
+        This portfolio is hosted using GitHub Pages as a demonstration
+        of a simple static website.
+    </p>
+
+</section>
+
+
+<!-- Projects -->
+<section id="projects">
+
+    <h2 class="section-title">Projects</h2>
+
+    <div class="projects">
+
+        <div class="project">
+            <h3>Project One</h3>
+
+            <p>
+                A sample web application created to demonstrate
+                frontend development and responsive design.
+            </p>
+        </div>
+
+
+        <div class="project">
+            <h3>Project Two</h3>
+
+            <p>
+                A small software project focused on solving a
+                practical problem with a clean and simple interface.
+            </p>
+        </div>
+
+
+        <div class="project">
+            <h3>Project Three</h3>
+
+            <p>
+                An experimental project built to explore new
+                technologies and development techniques.
+            </p>
+        </div>
+
+    </div>
+
+</section>
+
+
+<!-- Skills -->
+<section id="skills">
+
+    <h2 class="section-title">Skills</h2>
+
+    <div class="skills">
+        <span class="skill">HTML</span>
+        <span class="skill">CSS</span>
+        <span class="skill">JavaScript</span>
+        <span class="skill">Git</span>
+        <span class="skill">GitHub</span>
+        <span class="skill">Responsive Design</span>
+    </div>
+
+</section>
+
+
+<!-- Contact -->
+<section id="contact">
+
+    <h2 class="section-title">Contact</h2>
+
+    <p>
+        Interested in working together? Feel free to reach out.
+    </p>
+
+    <a class="button" href="mailto:alex@example.com">
+        Email Me
+    </a>
+
+</section>
+
+
+<!-- Footer -->
 <footer>
-    <p>&copy; 2026 Alex Morgan. All rights reserved.</p>
+    <p>
+        &copy; 2026 Alex Morgan. All rights reserved.
+    </p>
 </footer>
 
 </body> </html>
