@@ -1,4 +1,8 @@
-<!DOCTYPE html> <html lang="en"> <head> <meta charset="UTF-8"> <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Alex Morgan | Portfolio</title>
 
 <style>
@@ -126,6 +130,20 @@
         margin-bottom: 10px;
     }
 
+    /* Featured project with embedded demo */
+    .project.featured {
+        grid-column: 1 / -1;
+    }
+
+    .project-embed {
+        width: 100%;
+        height: 450px;
+        margin-top: 15px;
+        border: none;
+        border-radius: 6px;
+        overflow: hidden;
+    }
+
     /* Skills */
     .skills {
         display: flex;
@@ -181,6 +199,10 @@
         .hero-image img {
             width: 200px;
             height: 200px;
+        }
+
+        .project-embed {
+            height: 320px;
         }
     }
 </style>
@@ -247,6 +269,21 @@
     <h2 class="section-title">Projects</h2>
 
     <div class="projects">
+
+        <div class="project featured">
+            <h3>Wildfire Heatmap</h3>
+
+            <p>
+                An interactive Leaflet map visualizing wildfire density
+                and hotspots across a region using a dynamic heatmap layer.
+            </p>
+
+            <iframe
+                class="project-embed"
+                src="wildfire_heatmap.html"
+                title="Wildfire Heatmap">
+            </iframe>
+        </div>
 
         <div class="project">
             <h3>Project One</h3>
