@@ -1,0 +1,1089 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Carte interactive - Sections eau vive</title>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css" />
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/MarkerCluster.css" />
+
+<style>
+  /* ===== Page / app shell ===== */
+  html, body {
+    margin: 0;
+    height: 100%;
+    font-family: "Avenir Next", "Helvetica Neue", Arial, sans-serif;
+  }
+
+  #appContainer {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+  }
+
+  /* ===== Sidebar shell (header + search box + scrollable list) ===== */
+  #sidebar {
+    width: 340px;
+    flex-shrink: 0;
+    display: flex;
+    flex-direction: column;
+    background: #ffffff;
+    border-right: 1px solid #d6d6d6;
+    box-sizing: border-box;
+  }
+
+  #sidebarHeader {
+    padding: 14px 16px 10px 16px;
+    border-bottom: 1px solid #e2e2e2;
+  }
+
+  #sidebarHeader h1 {
+    font-size: 16px;
+    margin: 0 0 6px 0;
+    color: #1a3c34;
+  }
+
+  #sidebarHeader p {
+    font-size: 12px;
+    color: #666;
+    margin: 0 0 8px 0;
+  }
+
+  #searchBox {
+    width: 100%;
+    box-sizing: border-box;
+    padding: 7px 10px;
+    font-size: 13px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+  }
+
+  #siteCount {
+    font-size: 11px;
+    color: #888;
+    margin-top: 6px;
+  }
+
+  #siteList {
+    flex: 1;
+    overflow-y: auto;
+  }
+
+  .region-group {
+    border-bottom: 1px solid #eee;
+  }
+
+  /* ===== Sidebar: région group headers (click to filter/expand) ===== */
+  .region-header {
+    padding: 10px 16px;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: 600;
+    font-size: 13px;
+    color: #1a3c34;
+    background: #fafafa;
+  }
+
+  .region-header:hover {
+    background: #f2f8f5;
+  }
+
+  .region-header.active {
+    background: #e3f1ea;
+  }
+
+  .region-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .region-arrow {
+    display: inline-block;
+    font-size: 10px;
+    transition: transform 0.15s ease;
+    color: #666;
+  }
+
+  .region-header.active .region-arrow {
+    transform: rotate(90deg);
+  }
+
+  .region-count {
+    font-size: 11px;
+    color: #888;
+    font-weight: 400;
+  }
+
+  .region-sites {
+    display: none;
+  }
+
+  .region-sites.expanded {
+    display: block;
+  }
+
+  /* ===== Sidebar: individual section (site) rows ===== */
+  .site-item {
+    padding: 9px 16px 9px 30px;
+    border-bottom: 1px solid #f1f1f1;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  .site-item:hover {
+    background: #f2f8f5;
+  }
+
+  .site-item.active {
+    background: #e3f1ea;
+    border-left: 3px solid #238c20;
+    padding-left: 27px;
+  }
+
+  .site-name {
+    font-size: 13px;
+    font-weight: 600;
+    color: #1a3c34;
+    margin-bottom: 2px;
+  }
+
+  .site-meta {
+    font-size: 11.5px;
+    color: #666;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .badge {
+    display: inline-block;
+    padding: 1px 6px;
+    border-radius: 3px;
+    font-size: 10.5px;
+    font-weight: 600;
+    background: #eef1ea;
+    color: #3b6d11;
+  }
+
+  .badge.closed {
+    background: #fcebeb;
+    color: #a32d2d;
+  }
+
+  .badge.access {
+    background: #faeeda;
+    color: #854f0b;
+  }
+
+  .site-empty, .site-loading {
+    padding: 20px 16px;
+    font-size: 13px;
+    color: #888;
+    text-align: center;
+  }
+
+  /* ===== Map area + Leaflet popup styling ===== */
+  #mapViewDiv {
+    flex: 1;
+    position: relative;
+  }
+
+  .simple-popup {
+    font-size: 13px;
+    line-height: 1.5;
+  }
+
+  .simple-popup .popup-title {
+    font-size: 14px;
+    font-weight: 700;
+    color: #1a3c34;
+    margin-bottom: 4px;
+  }
+
+  .simple-popup .popup-row {
+    color: #333;
+  }
+
+  .simple-popup .popup-row b {
+    color: #111;
+  }
+
+  .leaflet-popup-content-wrapper {
+    border-radius: 6px;
+  }
+
+  .leaflet-interactive:focus {
+    /* Suppresses the browser's default focus rectangle that would
+       otherwise appear around a clicked polyline/marker. */
+    outline: none;
+  }
+
+  /* ===== Map markers: single-site dot, its highlighted state, and the
+     cluster bubble (with its own highlighted state for hover-from-list) ===== */
+  .site-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: #238c20;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 2px rgba(0,0,0,0.5);
+    cursor: pointer;
+  }
+
+  .site-dot-highlight {
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: #e8590c;
+    border: 3px solid #ffffff;
+    box-shadow: 0 0 6px rgba(0,0,0,0.7);
+    cursor: pointer;
+  }
+
+  .cluster-dot {
+    width: 34px;
+    height: 34px;
+    border-radius: 50%;
+    background: #238c20;
+    color: #ffffff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 13px;
+    border: 2px solid #ffffff;
+    box-shadow: 0 0 2px rgba(0,0,0,0.5);
+    transition: transform 0.1s ease;
+  }
+
+  .cluster-dot.cluster-dot-highlight {
+    background: #e8590c;
+    box-shadow: 0 0 8px rgba(232, 89, 12, 0.85);
+    transform: scale(1.15);
+  }
+</style>
+</head>
+<body>
+
+<div id="appContainer">
+
+  <div id="sidebar">
+    <div id="sidebarHeader">
+      <h1>Sections eau vive</h1>
+      <p>Cliquez sur une region pour filtrer ses sites, ou sur un site pour le localiser.</p>
+      <input type="text" id="searchBox" placeholder="Rechercher un nom de riviere ou de section..." />
+      <div id="siteCount"></div>
+    </div>
+    <div id="siteList">
+      <div class="site-loading">Chargement des sites...</div>
+    </div>
+  </div>
+
+  <div id="mapViewDiv"></div>
+
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet.markercluster/1.5.3/leaflet.markercluster.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@turf/turf@6.5.0/turf.min.js"></script>
+
+<script>
+  // ===================================================================
+  // DATA SOURCES
+  // ===================================================================
+  const FEATURE_SERVICE_URL = "https://services8.arcgis.com/DxiA7PucIZzprCzK/arcgis/rest/services/Carte_interactive_EVQ_view/FeatureServer";
+  const EAU_VIVE_LAYER_ID = 17;
+
+  const ADMIN_REGIONS_URL = "https://servicescarto.mern.gouv.qc.ca/pes/rest/services/Territoire/SDA_WMS/MapServer/0/query?where=1%3D1&outFields=*&f=geojson&outSR=4326";
+
+  // ===================================================================
+  // CONFIGURATION — thresholds, colors, bounds. Edit here for tweaks.
+  // ===================================================================
+  const NO_REGION_KEY = "__NONE__";
+  // Zoom level at which the individual river-section lines start being drawn
+  // (below this, only the clustered dot markers show).
+  const LINE_ZOOM_THRESHOLD = 9;
+  // Zoom level at which the dot markers finally disappear. Keeping this a
+  // bit higher than LINE_ZOOM_THRESHOLD creates an overlap zone where both
+  // markers and lines are visible together, instead of an abrupt swap.
+  const MARKER_ZOOM_THRESHOLD = LINE_ZOOM_THRESHOLD + 2;
+  // Colors used throughout: river-section lines/dots, the orange highlight
+  // (hover + selection), and the blue région boundary outline.
+  const LINE_COLOR = "#238c20";
+  const HIGHLIGHT_COLOR = "#e8590c";
+  const BOUNDARY_COLOR = "#185fa5";
+  const ZOOM_DURATION = 1.4;
+
+  // Région polygon appearance for each state (see applyRegionStyles below):
+  // untouched, hovered in the sidebar, the one currently selected/filtered,
+  // and the others dimmed out while a région is selected.
+  const REGION_STYLE_NONE = { color: BOUNDARY_COLOR, weight: 0, opacity: 0, fillColor: BOUNDARY_COLOR, fillOpacity: 0 };
+  const REGION_STYLE_HOVER = { color: BOUNDARY_COLOR, weight: 2, opacity: 0.9, fillColor: BOUNDARY_COLOR, fillOpacity: 0.45 };
+  const REGION_STYLE_SELECTED = { color: BOUNDARY_COLOR, weight: 3, opacity: 1, fillColor: BOUNDARY_COLOR, fillOpacity: 0 };
+  const REGION_STYLE_DIMMED = { color: "#2a2a2a", weight: 0, opacity: 0, fillColor: "#1a1a1a", fillOpacity: 0.45 };
+
+  // Rough bounding box for Quebec, used both to reject bad coordinates
+  // (isValidLngLat) and as a fallback camera view when real bounds are
+  // unavailable or invalid.
+  const QC_LAT_MIN = 44, QC_LAT_MAX = 63.5, QC_LNG_MIN = -80, QC_LNG_MAX = -55;
+  const QC_FALLBACK_BOUNDS = L.latLngBounds([QC_LAT_MIN, QC_LNG_MIN], [QC_LAT_MAX, QC_LNG_MAX]);
+  const LONG_LINE_WARNING_M = 150000;
+
+  // Maps the raw ETAT_SECTN code from the data source to a display label.
+  const STATUS_LABELS = { O: "Ouvert", F: "Ferme", E: "Enjeux d'acces" };
+
+  // ===================================================================
+  // MAP INITIALIZATION
+  // ===================================================================
+  const map = L.map("mapViewDiv", { zoomControl: true }).setView([47, -71.5], 6);
+
+  L.tileLayer("https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png", {
+    attribution: "&copy; OpenStreetMap contributors",
+    maxZoom: 19
+  }).addTo(map);
+
+  // ===================================================================
+  // MARKER / CLUSTER ICONS
+  // ===================================================================
+  function greenDotIcon() {
+    return L.divIcon({
+      className: "site-dot-icon",
+      html: '<div class="site-dot"></div>',
+      iconSize: [14, 14],
+      iconAnchor: [7, 7]
+    });
+  }
+
+  function highlightDotIcon() {
+    return L.divIcon({
+      className: "site-dot-icon",
+      html: '<div class="site-dot-highlight"></div>',
+      iconSize: [22, 22],
+      iconAnchor: [11, 11]
+    });
+  }
+
+  function uniformClusterIcon(cluster) {
+    const count = cluster.getChildCount();
+    return L.divIcon({
+      className: "cluster-dot-icon",
+      html: '<div class="cluster-dot">' + count + '</div>',
+      iconSize: [34, 34],
+      iconAnchor: [17, 17]
+    });
+  }
+
+  const clusterGroup = L.markerClusterGroup({
+    spiderfyOnMaxZoom: true,
+    showCoverageOnHover: false,
+    zoomToBoundsOnClick: true,
+    maxClusterRadius: 50,
+    iconCreateFunction: uniformClusterIcon
+  });
+  const lineLayerGroup = L.layerGroup();
+  const regionsLayerGroup = L.layerGroup();
+
+  map.addLayer(regionsLayerGroup);
+  map.addLayer(clusterGroup);
+  map.addLayer(lineLayerGroup);
+
+  // ===================================================================
+  // MUTABLE STATE — the app's "current state" lives in these variables.
+  // ===================================================================
+  let highlightLine = null;         // orange overlay for the SELECTED (clicked) site
+  let hoverHighlightLine = null;    // orange overlay for the HOVERED site
+  let hoverHighlightedSite = null;
+  let selectedHighlightedSite = null;
+
+  const siteListEl = document.getElementById("siteList");
+  const siteCountEl = document.getElementById("siteCount");
+  const searchBoxEl = document.getElementById("searchBox");
+
+  let allSites = [];              // every site loaded from the feature service
+  let regionMap = new Map();      // région code -> array of sites in it
+  let regionLabels = {};          // région code -> display name
+  let adminRegions = [];          // { code, name, feature, boundaryLayer } per région
+  let activeItemEl = null;        // currently highlighted <div> in the sidebar list
+  let activeRegionCode = null;    // région currently selected/filtered (or null)
+  let hoveredRegionCode = null;   // région currently hovered in the sidebar (or null)
+  let searchQuery = "";
+
+  // ===================================================================
+  // GEOMETRY HELPERS
+  // ===================================================================
+  function isValidLngLat(c) {
+    const lng = c[0], lat = c[1];
+    return isFinite(lng) && isFinite(lat) &&
+      lat >= QC_LAT_MIN && lat <= QC_LAT_MAX &&
+      lng >= QC_LNG_MIN && lng <= QC_LNG_MAX;
+  }
+
+  function toLatLngsFiltered(coordsArray) {
+    return coordsArray.filter(isValidLngLat).map(function (c) { return [c[1], c[0]]; });
+  }
+
+  function lineMidpoint(coords) {
+    const idx = Math.floor(coords.length / 2);
+    return coords[idx];
+  }
+
+  // ===================================================================
+  // POPUP / LIST HTML BUILDERS — the section name/badges shown to users.
+  // ===================================================================
+  function statusBadgeClass(code) {
+    if (code === "F") return "badge closed";
+    if (code === "E") return "badge access";
+    return "badge";
+  }
+
+  function buildPopupHtml(props) {
+    const name = props.NOM || props.NOM_PLN_EAU || "Section sans nom";
+    let html = '<div class="simple-popup">';
+    html += '<div class="popup-title">' + name + '</div>';
+    if (props.DIFF_WWG) {
+      html += '<div class="popup-row"><b>Cote de difficulte:</b> ' + props.DIFF_WWG + '</div>';
+    }
+    if (props.LONGU) {
+      html += '<div class="popup-row"><b>Longueur:</b> ' + Number(props.LONGU).toFixed(1) + ' km</div>';
+    }
+    if (props.ETAT_SECTN && STATUS_LABELS[props.ETAT_SECTN]) {
+      html += '<div class="popup-row"><b>Statut:</b> ' + STATUS_LABELS[props.ETAT_SECTN] + '</div>';
+    }
+    html += '</div>';
+    return html;
+  }
+
+  function siteItemHtml(site) {
+    const props = site.properties;
+    const name = props.NOM || props.NOM_PLN_EAU || "Section sans nom";
+    const river = props.NOM_PLN_EAU || "";
+    const diff = props.DIFF_WWG || "";
+    const length = props.LONGU;
+    const statusCode = props.ETAT_SECTN;
+    const statusLabel = STATUS_LABELS[statusCode] || "";
+
+    let metaHtml = "";
+    if (river) metaHtml += "<span>" + river + "</span>";
+    if (length) metaHtml += "<span>" + Number(length).toFixed(1) + " km</span>";
+    if (statusLabel) metaHtml += '<span class="' + statusBadgeClass(statusCode) + '">' + statusLabel + "</span>";
+
+    const nameHtml = name + (diff ? ' <span class="badge">' + diff + "</span>" : "");
+
+    return '<div class="site-name">' + nameHtml + '</div><div class="site-meta">' + metaHtml + '</div>';
+  }
+
+  function attachSiteClick(item, site) {
+    item.dataset.objectid = site.properties.OBJECTID;
+    item.addEventListener("click", function (e) {
+      e.stopPropagation();
+      focusSite(site);
+    });
+    item.addEventListener("mouseenter", function () {
+      showHoverHighlight(site);
+    });
+    item.addEventListener("mouseleave", function () {
+      clearHoverHighlight();
+    });
+  }
+
+  // ===================================================================
+  // SIDEBAR LIST RENDERING — grouped-by-région view (default) and the
+  // flat view used while searching.
+  // ===================================================================
+  function renderGroupedList() {
+    siteListEl.innerHTML = "";
+
+    if (allSites.length === 0) {
+      siteListEl.innerHTML = '<div class="site-empty">Aucun site trouve.</div>';
+      return;
+    }
+
+    const sortedCodes = Array.from(regionMap.keys()).sort(function (a, b) {
+      const labelA = regionLabels[a] || "Region non determinee";
+      const labelB = regionLabels[b] || "Region non determinee";
+      return labelA.localeCompare(labelB);
+    });
+
+    sortedCodes.forEach(function (code) {
+      const sites = regionMap.get(code);
+      const label = regionLabels[code] || "Region non determinee";
+
+      const group = document.createElement("div");
+      group.className = "region-group";
+      group.dataset.region = code;
+
+      const header = document.createElement("div");
+      header.className = "region-header";
+      if (code === activeRegionCode) header.classList.add("active");
+      header.innerHTML =
+        '<span class="region-title"><span class="region-arrow">&#9656;</span>' + label + '</span>' +
+        '<span class="region-count">' + sites.length + (sites.length > 1 ? " sections" : " section") + '</span>';
+
+      const sitesContainer = document.createElement("div");
+      sitesContainer.className = "region-sites";
+      if (code === activeRegionCode) sitesContainer.classList.add("expanded");
+
+      sites.forEach(function (site) {
+        const item = document.createElement("div");
+        item.className = "site-item";
+        item.innerHTML = siteItemHtml(site);
+        attachSiteClick(item, site);
+        sitesContainer.appendChild(item);
+      });
+
+      header.addEventListener("click", function () {
+        toggleRegion(code);
+      });
+
+      header.addEventListener("mouseenter", function () {
+        hoveredRegionCode = code;
+        applyRegionStyles();
+      });
+
+      header.addEventListener("mouseleave", function () {
+        hoveredRegionCode = null;
+        applyRegionStyles();
+      });
+
+      group.appendChild(header);
+      group.appendChild(sitesContainer);
+      siteListEl.appendChild(group);
+    });
+  }
+
+  function renderFlatList(sites) {
+    siteListEl.innerHTML = "";
+
+    if (sites.length === 0) {
+      siteListEl.innerHTML = '<div class="site-empty">Aucun site ne correspond a la recherche.</div>';
+      return;
+    }
+
+    sites.forEach(function (site) {
+      const item = document.createElement("div");
+      item.className = "site-item";
+      item.style.paddingLeft = "16px";
+      item.innerHTML = siteItemHtml(site);
+      attachSiteClick(item, site);
+      siteListEl.appendChild(item);
+    });
+  }
+
+  function setMarkerHighlighted(site, on) {
+    if (!site || !site._marker) return;
+    site._marker.setIcon(on ? highlightDotIcon() : greenDotIcon());
+  }
+
+  // ===================================================================
+  // HIGHLIGHT / SELECTION — two independent highlight "layers":
+  //   - the SELECTED site (clicked, stays highlighted until deselected)
+  //   - the HOVERED site (temporary, follows the mouse)
+  // Both can highlight the marker icon, an orange overlay line, and (if
+  // the marker is folded into a cluster) the cluster bubble itself.
+  // ===================================================================
+  function clearHighlight() {
+    if (highlightLine) {
+      map.removeLayer(highlightLine);
+      highlightLine = null;
+    }
+    if (selectedHighlightedSite && selectedHighlightedSite !== hoverHighlightedSite) {
+      setMarkerHighlighted(selectedHighlightedSite, false);
+    }
+    selectedHighlightedSite = null;
+  }
+
+  function deselectSite() {
+    clearHighlight();
+    map.closePopup();
+    if (activeItemEl) {
+      activeItemEl.classList.remove("active");
+      activeItemEl = null;
+    }
+    if (activeRegionCode !== null) {
+      activeRegionCode = null;
+      refreshDisplay();
+      applyRegionStyles();
+      renderGroupedList();
+      // Deliberately no camera movement here — deselecting should leave
+      // the current view (position/zoom) exactly as it is.
+    }
+  }
+
+  map.on("click", deselectSite);
+
+  // If a site's marker is currently folded into a cluster bubble, give that
+  // bubble a highlight style (no zooming/spiderfying) so hovering the
+  // section in the list still shows something on the map.
+  let highlightedClusterEl = null;
+
+  function setClusterHighlight(site, on) {
+    if (!site || !clusterGroup.hasLayer(site._marker)) return;
+    const visibleParent = clusterGroup.getVisibleParent(site._marker);
+    if (!visibleParent || visibleParent === site._marker || typeof visibleParent.getElement !== "function") return;
+    const el = visibleParent.getElement();
+    const dot = el && el.querySelector(".cluster-dot");
+    if (!dot) return;
+    if (on) {
+      dot.classList.add("cluster-dot-highlight");
+      highlightedClusterEl = dot;
+    } else if (highlightedClusterEl === dot) {
+      dot.classList.remove("cluster-dot-highlight");
+      highlightedClusterEl = null;
+    }
+  }
+
+  function clearClusterHighlight() {
+    if (highlightedClusterEl) {
+      highlightedClusterEl.classList.remove("cluster-dot-highlight");
+      highlightedClusterEl = null;
+    }
+  }
+
+  function showHoverHighlight(site) {
+    clearHoverHighlight();
+    hoverHighlightLine = L.polyline(site._line.getLatLngs(), {
+      color: HIGHLIGHT_COLOR,
+      weight: 5,
+      opacity: 0.85,
+      interactive: false
+    }).addTo(map);
+    hoverHighlightedSite = site;
+    setMarkerHighlighted(site, true);
+    setClusterHighlight(site, true);
+  }
+
+  function clearHoverHighlight() {
+    if (hoverHighlightLine) {
+      map.removeLayer(hoverHighlightLine);
+      hoverHighlightLine = null;
+    }
+    if (hoverHighlightedSite && hoverHighlightedSite !== selectedHighlightedSite) {
+      setMarkerHighlighted(hoverHighlightedSite, false);
+    }
+    clearClusterHighlight();
+    hoverHighlightedSite = null;
+  }
+
+  // ===================================================================
+  // REGION POLYGON STYLING
+  // ===================================================================
+  function applyRegionStyles() {
+    adminRegions.forEach(function (region) {
+      let style;
+      if (region.code === activeRegionCode) {
+        style = REGION_STYLE_SELECTED;
+      } else if (activeRegionCode) {
+        style = REGION_STYLE_DIMMED;
+      } else if (region.code === hoveredRegionCode) {
+        style = REGION_STYLE_HOVER;
+      } else {
+        style = REGION_STYLE_NONE;
+      }
+      region.boundaryLayer.setStyle(style);
+    });
+  }
+
+  // ===================================================================
+  // BOUNDS / CAMERA HELPERS — wrapped in try/catch so a malformed
+  // geometry can never throw mid-way through a click handler and skip
+  // the rest of it (e.g. leaving the sidebar list expanded).
+  // ===================================================================
+  function safeGroupBounds(group, fallback) {
+    try {
+      return group.getLayers().length > 0 ? group.getBounds() : fallback;
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function safeLayerBounds(layer, fallback) {
+    try {
+      return layer.getBounds();
+    } catch (e) {
+      return fallback;
+    }
+  }
+
+  function boundsForSites(sites, fallback) {
+    if (!sites || sites.length === 0) return fallback;
+    const allBounds = sites.map(function (s) { return s._line.getBounds(); });
+    let combined = allBounds[0];
+    for (let i = 1; i < allBounds.length; i++) combined.extend(allBounds[i]);
+    return combined;
+  }
+
+  function boundsForLine(site) {
+    const bounds = site._line.getBounds();
+    const diagonal = bounds.getNorthWest().distanceTo(bounds.getSouthEast());
+    if (diagonal > LONG_LINE_WARNING_M) {
+      console.warn("Section de " + Math.round(diagonal / 1000) + " km, ajustement du zoom pour montrer la ligne complete:", site.properties.NOM || site.properties.OBJECTID);
+    }
+    return bounds;
+  }
+
+  // ===================================================================
+  // FILTERING & VISIBILITY — what's currently shown, driven by search
+  // text, the selected région, and the current zoom (see refreshDisplay).
+  // ===================================================================
+  function siteMatchesSearch(site) {
+    if (!searchQuery) return false;
+    const name = (site.properties.NOM || "").toLowerCase();
+    const river = (site.properties.NOM_PLN_EAU || "").toLowerCase();
+    return name.includes(searchQuery) || river.includes(searchQuery);
+  }
+
+  function isSiteVisible(site) {
+    if (searchQuery) return siteMatchesSearch(site);
+    if (!activeRegionCode) return true;
+    return site._regionCode === activeRegionCode;
+  }
+
+  // Decides, for every site, whether its marker and/or its line should be
+  // on the map right now — based on the current zoom (see the two zoom
+  // thresholds above) and whether it passes the current region/search
+  // filter (isSiteVisible). Runs on every zoom change and every filter
+  // change.
+  function refreshDisplay() {
+    const z = map.getZoom();
+    const showLines = z >= LINE_ZOOM_THRESHOLD;
+    const showMarkers = z < MARKER_ZOOM_THRESHOLD;
+    allSites.forEach(function (site) {
+      const visible = isSiteVisible(site);
+      site._visible = visible;
+
+      if (showLines && visible) {
+        if (!lineLayerGroup.hasLayer(site._line)) lineLayerGroup.addLayer(site._line);
+      } else if (lineLayerGroup.hasLayer(site._line)) {
+        lineLayerGroup.removeLayer(site._line);
+      }
+
+      if (showMarkers && visible) {
+        if (!clusterGroup.hasLayer(site._marker)) clusterGroup.addLayer(site._marker);
+      } else if (clusterGroup.hasLayer(site._marker)) {
+        clusterGroup.removeLayer(site._marker);
+      }
+    });
+  }
+
+  map.on("zoomend", refreshDisplay);
+
+  // ===================================================================
+  // USER INTERACTIONS — région selection/deselection, focusing a site
+  // (from a marker, a polyline, or a sidebar click), and clearing the
+  // selection when clicking empty map space.
+  // ===================================================================
+  function flyToBoundsSafe(bounds, extraOpts) {
+    const opts = Object.assign({ padding: [40, 40], maxZoom: 11, duration: ZOOM_DURATION }, extraOpts || {});
+    try {
+      map.flyToBounds(bounds, opts);
+    } catch (e) {
+      console.warn("Deplacement de la carte impossible, position inchangee:", e);
+    }
+  }
+
+  function toggleRegion(code) {
+    if (activeItemEl) {
+      activeItemEl.classList.remove("active");
+      activeItemEl = null;
+    }
+    clearHighlight();
+    searchQuery = "";
+    searchBoxEl.value = "";
+
+    if (activeRegionCode === code) {
+      activeRegionCode = null;
+      flyToBoundsSafe(safeGroupBounds(regionsLayerGroup, QC_FALLBACK_BOUNDS));
+    } else {
+      activeRegionCode = code;
+
+      const region = adminRegions.find(function (r) { return r.code === code; });
+      if (region) {
+        flyToBoundsSafe(safeLayerBounds(region.boundaryLayer, QC_FALLBACK_BOUNDS));
+      } else {
+        const sites = regionMap.get(code) || [];
+        flyToBoundsSafe(boundsForSites(sites, QC_FALLBACK_BOUNDS));
+      }
+    }
+    refreshDisplay();
+    applyRegionStyles();
+    renderGroupedList();
+  }
+
+  function revealInList(site) {
+    if (!searchQuery) {
+      const groupEl = siteListEl.querySelector('.region-group[data-region="' + site._regionCode + '"]');
+      if (groupEl) {
+        const sitesContainer = groupEl.querySelector(".region-sites");
+        const header = groupEl.querySelector(".region-header");
+        if (sitesContainer && !sitesContainer.classList.contains("expanded")) {
+          sitesContainer.classList.add("expanded");
+          header.classList.add("active");
+        }
+      }
+    }
+
+    const itemEl = siteListEl.querySelector('[data-objectid="' + site.properties.OBJECTID + '"]');
+    if (activeItemEl) activeItemEl.classList.remove("active");
+    if (itemEl) {
+      itemEl.classList.add("active");
+      activeItemEl = itemEl;
+      itemEl.scrollIntoView({ block: "center", behavior: "smooth" });
+    }
+  }
+
+  function focusSite(site, popupLatLng) {
+    if (!searchQuery && site._regionCode !== activeRegionCode) {
+      activeRegionCode = site._regionCode;
+      refreshDisplay();
+      applyRegionStyles();
+      renderGroupedList();
+    }
+
+    revealInList(site);
+
+    clearHighlight();
+    highlightLine = L.polyline(site._line.getLatLngs(), {
+      color: HIGHLIGHT_COLOR,
+      weight: 6,
+      opacity: 1,
+      interactive: false
+    }).addTo(map);
+    selectedHighlightedSite = site;
+    setMarkerHighlighted(site, true);
+
+    const bounds = boundsForLine(site);
+    flyToBoundsSafe(bounds, { padding: [80, 80], maxZoom: 15 });
+
+    // Same popup content/behavior regardless of whether the marker, the
+    // polyline, or the sidebar list item triggered the selection.
+    L.popup()
+      .setLatLng(popupLatLng || bounds.getCenter())
+      .setContent(buildPopupHtml(site.properties))
+      .openOn(map);
+  }
+
+  // ===================================================================
+  // REGION LOOKUP — assigns each site to a région by point-in-polygon
+  // test (via turf), used once at load time to build the sidebar groups.
+  // ===================================================================
+  function findRegionForLatLng(latlng) {
+    if (typeof turf === "undefined" || adminRegions.length === 0) return null;
+    let pt;
+    try {
+      pt = turf.point([latlng[1], latlng[0]]);
+    } catch (e) {
+      return null;
+    }
+    for (let i = 0; i < adminRegions.length; i++) {
+      try {
+        if (turf.booleanPointInPolygon(pt, adminRegions[i].feature)) return adminRegions[i];
+      } catch (e) {
+        // ignore malformed region geometry
+      }
+    }
+    return null;
+  }
+
+  function buildRegionMap() {
+    regionMap = new Map();
+    allSites.forEach(function (site) {
+      const code = site._regionCode || NO_REGION_KEY;
+      if (!regionMap.has(code)) regionMap.set(code, []);
+      regionMap.get(code).push(site);
+    });
+  }
+
+  // ===================================================================
+  // DATA LOADING
+  // ===================================================================
+  // Fetches the administrative region polygons and draws them (dimmed,
+  // non-interactive) under everything else. `adminRegions` keeps the raw
+  // feature + code + rendered layer for each one, used for filtering,
+  // styling, and the sidebar labels.
+  function fetchAdminRegions() {
+    return fetch(ADMIN_REGIONS_URL)
+      .then(function (res) { return res.json(); })
+      .then(function (geojson) {
+        adminRegions = (geojson.features || []).map(function (f) {
+          const boundaryLayer = L.geoJSON(f, { style: REGION_STYLE_NONE, interactive: false });
+          const code = f.properties.RES_CO_REG;
+          regionsLayerGroup.addLayer(boundaryLayer);
+          return {
+            code: code,
+            name: f.properties.RES_NM_REG,
+            feature: f,
+            boundaryLayer: boundaryLayer
+          };
+        });
+      })
+      .catch(function (err) {
+        console.error("Impossible de charger les regions administratives:", err);
+        adminRegions = [];
+      });
+  }
+
+  function fetchSites() {
+    const queryUrl = FEATURE_SERVICE_URL + "/" + EAU_VIVE_LAYER_ID +
+      "/query?where=1%3D1&outFields=*&f=geojson&outSR=4326";
+    return fetch(queryUrl).then(function (res) { return res.json(); });
+  }
+
+  function withTimeout(promise, ms) {
+    return Promise.race([
+      promise,
+      new Promise(function (resolve) {
+        setTimeout(function () {
+          console.warn("Les regions administratives mettent trop de temps a repondre, poursuite sans elles.");
+          resolve();
+        }, ms);
+      })
+    ]);
+  }
+
+  // ===================================================================
+  // APP BOOTSTRAP — load régions + sites in parallel, build the marker
+  // and polyline for each site, then render the sidebar and the map.
+  // Wrapped so that if map-only display code fails, the sidebar list
+  // (already rendered) still stays usable.
+  // ===================================================================
+  Promise.all([withTimeout(fetchAdminRegions(), 6000), fetchSites()])
+    .then(function (results) {
+      const geojson = results[1];
+      allSites = geojson.features || [];
+
+      allSites.forEach(function (site) {
+        try {
+          let latlngs = null;
+          let midpointSource = null;
+
+          if (site.geometry.type === "LineString") {
+            const filtered = toLatLngsFiltered(site.geometry.coordinates);
+            if (filtered.length >= 2) {
+              latlngs = filtered;
+              midpointSource = filtered;
+            }
+          } else if (site.geometry.type === "MultiLineString") {
+            const parts = site.geometry.coordinates
+              .map(toLatLngsFiltered)
+              .filter(function (part) { return part.length >= 2; });
+            if (parts.length > 0) {
+              latlngs = parts;
+              midpointSource = parts[0];
+            }
+          }
+
+          if (!latlngs || !midpointSource) {
+            console.warn("Geometrie invalide ou hors limites, site ignore:", site.properties.NOM || site.properties.OBJECTID);
+            return;
+          }
+
+          const siteName = site.properties.NOM || site.properties.NOM_PLN_EAU || "Section sans nom";
+
+          site._line = L.polyline(latlngs, {
+            color: LINE_COLOR,
+            weight: 3,
+            opacity: 0.9
+          });
+          site._line.bindTooltip(siteName, { sticky: true });
+          site._line.on("click", function (e) {
+            L.DomEvent.stopPropagation(e);
+            focusSite(site, e.latlng);
+          });
+          site._line.on("mouseover", function () {
+            showHoverHighlight(site);
+          });
+          site._line.on("mouseout", function () {
+            clearHoverHighlight();
+          });
+
+          const midLatLng = lineMidpoint(midpointSource);
+
+          site._marker = L.marker(midLatLng, { icon: greenDotIcon() });
+          site._marker.bindTooltip(siteName);
+          site._marker.on("click", function (e) {
+            L.DomEvent.stopPropagation(e);
+            focusSite(site, midLatLng);
+          });
+          site._marker.on("mouseover", function () {
+            showHoverHighlight(site);
+          });
+          site._marker.on("mouseout", function () {
+            clearHoverHighlight();
+          });
+
+          const region = findRegionForLatLng(midLatLng);
+          site._regionCode = region ? region.code : NO_REGION_KEY;
+        } catch (e) {
+          console.warn("Erreur de traitement pour un site, ignore:", site.properties && (site.properties.NOM || site.properties.OBJECTID), e);
+        }
+      });
+
+      allSites = allSites.filter(function (s) { return !!s._marker && !!s._line; });
+
+      allSites.sort(function (a, b) {
+        const nameA = (a.properties.NOM_PLN_EAU || "") + (a.properties.NOM || "");
+        const nameB = (b.properties.NOM_PLN_EAU || "") + (b.properties.NOM || "");
+        return nameA.localeCompare(nameB);
+      });
+
+      regionLabels = {};
+      adminRegions.forEach(function (r) { regionLabels[r.code] = r.name; });
+      regionLabels[NO_REGION_KEY] = "Region non determinee";
+
+      buildRegionMap();
+
+      siteCountEl.textContent = allSites.length + " site(s)";
+      renderGroupedList();
+
+      // The list above is now safely rendered. Anything past this point is
+      // purely visual (map styling/positioning) - wrap it so a failure here
+      // can never wipe out the sidebar list that already rendered correctly.
+      try {
+        applyRegionStyles();
+        refreshDisplay();
+        map.fitBounds(safeGroupBounds(regionsLayerGroup, QC_FALLBACK_BOUNDS), { padding: [40, 40] });
+      } catch (e) {
+        console.error("Erreur lors de l'affichage initial de la carte (la liste reste fonctionnelle):", e);
+      }
+    })
+    .catch(function (err) {
+      siteListEl.innerHTML = '<div class="site-empty">Erreur lors du chargement des sites.</div>';
+      console.error(err);
+    });
+
+  // ===================================================================
+  // SEARCH BOX
+  // ===================================================================
+  searchBoxEl.addEventListener("input", function () {
+    clearHighlight();
+    if (activeItemEl) {
+      activeItemEl.classList.remove("active");
+      activeItemEl = null;
+    }
+
+    searchQuery = searchBoxEl.value.trim().toLowerCase();
+    activeRegionCode = null;
+    applyRegionStyles();
+
+    if (!searchQuery) {
+      renderGroupedList();
+      refreshDisplay();
+      flyToBoundsSafe(safeGroupBounds(regionsLayerGroup, QC_FALLBACK_BOUNDS));
+      return;
+    }
+
+    const filtered = allSites.filter(siteMatchesSearch);
+    renderFlatList(filtered);
+    refreshDisplay();
+    if (filtered.length > 0) {
+      flyToBoundsSafe(boundsForSites(filtered, QC_FALLBACK_BOUNDS));
+    }
+  });
+</script>
+
+</body>
+</html>
