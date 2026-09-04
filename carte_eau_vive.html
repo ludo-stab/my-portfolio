@@ -179,6 +179,26 @@
     color: #854f0b;
   }
 
+  .badge.optimal {
+    background: #e1eefc;
+    color: #185fa5;
+  }
+
+  .badge.characteristic-period {
+    background: #f1e6fa;
+    color: #6a3d99;
+  }
+
+  .badge.characteristic-style {
+    background: #eef2f7;
+    color: #3d5266;
+  }
+
+  .badge.characteristic-duree {
+    background: #dff5f0;
+    color: #1a6f5c;
+  }
+
   .site-empty, .site-loading {
     padding: 20px 16px;
     font-size: 13px;
@@ -192,28 +212,226 @@
     position: relative;
   }
 
-  .simple-popup {
+  /* ===== Info sheet: static panel pinned top-right of the map,
+     replacing the old Leaflet popup that followed the clicked point. ===== */
+  #infoPanel {
+    position: absolute;
+    top: 16px;
+    right: 16px;
+    width: 300px;
+    max-width: calc(100% - 32px);
+    background: #ffffff;
+    border-radius: 3px;
+    box-shadow: 0 4px 16px rgba(0,0,0,0.28);
+    z-index: 1000;
     font-size: 13px;
     line-height: 1.5;
+    display: none;
+    overflow: hidden;
   }
 
-  .simple-popup .popup-title {
+  #infoPanel.visible {
+    display: block;
+  }
+
+  #infoPanel .info-panel-close {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    border: none;
+    background: rgba(255,255,255,0.18);
+    border-radius: 3px;
+    width: 24px;
+    height: 24px;
+    font-size: 16px;
+    line-height: 1;
+    color: rgba(255,255,255,0.9);
+    cursor: pointer;
+    z-index: 2;
+  }
+
+  #infoPanel .info-panel-close:hover {
+    background: rgba(255,255,255,0.32);
+    color: #ffffff;
+  }
+
+  #infoPanel .info-panel-content {
+    padding: 0;
+  }
+
+  /* Header band: gives the section name its own contrasting "title bar"
+     instead of blending into the rest of the sheet. */
+  #infoPanel .sheet-header {
+    background: #1a3c34;
+    padding: 16px 36px 14px 18px;
+  }
+
+  #infoPanel .sheet-title {
+    font-size: 19px;
+    font-weight: 700;
+    color: #ffffff;
+    line-height: 1.3;
+  }
+
+  #infoPanel .sheet-subtitle-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-top: 3px;
+  }
+
+  #infoPanel .sheet-subtitle {
     font-size: 14px;
+    color: rgba(255,255,255,0.75);
+    flex: 1 1 auto;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  #infoPanel .sheet-subtitle-row .badge {
+    flex-shrink: 0;
+  }
+
+  #infoPanel .sheet-content {
+    padding: 14px 18px 16px 18px;
+  }
+
+  #infoPanel .sheet-body {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  #infoPanel .sheet-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    gap: 10px;
+  }
+
+  #infoPanel .sheet-label {
+    font-size: 13px;
+    font-weight: 600;
+    color: #555;
+    flex-shrink: 0;
+  }
+
+  #infoPanel .sheet-value {
+    font-size: 14px;
+    color: #111;
+    text-align: right;
+  }
+
+  #infoPanel .sheet-divider {
+    border-top: 1px solid #e2e2e2;
+    margin: 12px 0;
+  }
+
+  #infoPanel .sheet-section-title {
+    font-size: 13px;
     font-weight: 700;
     color: #1a3c34;
-    margin-bottom: 4px;
+    margin-bottom: 8px;
   }
 
-  .simple-popup .popup-row {
-    color: #333;
+  #infoPanel .sheet-badges {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
-  .simple-popup .popup-row b {
+  #infoPanel .sheet-hydro-placeholder {
+    font-size: 12.5px;
+    font-style: italic;
+    color: #999;
+  }
+
+  #infoPanel .sheet-flow-line {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 8px;
+  }
+
+  #infoPanel .sheet-flow-value {
+    font-size: 15px;
+    font-weight: 700;
     color: #111;
   }
 
-  .leaflet-popup-content-wrapper {
-    border-radius: 6px;
+  #infoPanel .sheet-hydro-thresholds {
+    font-size: 12px;
+    color: #777;
+    margin-top: 6px;
+  }
+
+  #infoPanel .sheet-hydro-updated {
+    font-size: 11px;
+    color: #aaa;
+    margin-top: 6px;
+  }
+
+  /* Flow gauge: a min-max bar with an optional highlighted "optimal" zone,
+     tick marks + labels at min/opt/max, and an arrow marking the current
+     live débit. */
+  #infoPanel .flow-gauge {
+    position: relative;
+    height: 34px;
+    margin-top: 4px;
+  }
+
+  #infoPanel .flow-gauge-arrow {
+    position: absolute;
+    top: 2px;
+    width: 0;
+    height: 0;
+    border-left: 6px solid transparent;
+    border-right: 6px solid transparent;
+    border-top: 9px solid #3b6d11;
+    transform: translateX(-50%);
+  }
+
+  #infoPanel .flow-gauge-track {
+    position: absolute;
+    top: 14px;
+    left: 0;
+    right: 0;
+    height: 6px;
+    border-radius: 3px;
+    background: #eef1ea;
+  }
+
+  #infoPanel .flow-gauge-optimal-zone {
+    position: absolute;
+    top: 0;
+    height: 6px;
+    border-radius: 3px;
+    background: #b9d8f4;
+  }
+
+  #infoPanel .flow-gauge-tick {
+    position: absolute;
+    top: 10px;
+    width: 2px;
+    height: 14px;
+    background: #999;
+    transform: translateX(-50%);
+  }
+
+  #infoPanel .flow-gauge-tick.tick-opt {
+    background: #185fa5;
+  }
+
+  #infoPanel .flow-gauge-tick-label {
+    position: absolute;
+    top: 24px;
+    font-size: 10.5px;
+    color: #777;
+    white-space: nowrap;
   }
 
   .leaflet-interactive:focus {
@@ -283,7 +501,12 @@
     </div>
   </div>
 
-  <div id="mapViewDiv"></div>
+  <div id="mapViewDiv">
+    <div id="infoPanel">
+      <button type="button" class="info-panel-close" aria-label="Fermer">&times;</button>
+      <div class="info-panel-content"></div>
+    </div>
+  </div>
 
 </div>
 
@@ -299,6 +522,11 @@
   const EAU_VIVE_LAYER_ID = 17;
 
   const ADMIN_REGIONS_URL = "https://servicescarto.mern.gouv.qc.ca/pes/rest/services/Territoire/SDA_WMS/MapServer/0/query?where=1%3D1&outFields=*&f=geojson&outSR=4326";
+
+  // Public real-time hydrometric feed (Vigilance - Securite civile, MSP),
+  // aggregating CEHQ/ECCC/other providers' latest débit (m3/s) and niveau
+  // (m) per station. Keyed by station number, matched against STAT_HYDRO.
+  const HYDRO_STATIONS_URL = "https://geoegl.msp.gouv.qc.ca/apis/mapserver-vigilance/ws/vigilance.fcgi?service=wfs&version=1.1.0&request=getfeature&typename=stations_igo2_public&outputformat=geojson&srsName=epsg:4326";
 
   // ===================================================================
   // CONFIGURATION — thresholds, colors, bounds. Edit here for tweaks.
@@ -333,8 +561,52 @@
   const QC_FALLBACK_BOUNDS = L.latLngBounds([QC_LAT_MIN, QC_LNG_MIN], [QC_LAT_MAX, QC_LNG_MAX]);
   const LONG_LINE_WARNING_M = 150000;
 
-  // Maps the raw ETAT_SECTN code from the data source to a display label.
-  const STATUS_LABELS = { O: "Ouvert", F: "Ferme", E: "Enjeux d'acces" };
+  // (ETAT_SECTN / statut is intentionally not shown - deprioritized per
+  // feedback; NIV_DIFFI is the more meaningful attribute for both the
+  // sidebar list and the info sheet.)
+
+  // Column holding the paddler skill-level classification (Debutant /
+  // Intermediaire / Avance / etc.) - NOT DIFF_WWG, which is the roman-
+  // numeral rapid class (I-VI). Stored as a coded value (ND01..ND04).
+  const SKILL_LEVEL_FIELD = "NIV_DIFFI";
+  const SKILL_LEVEL_LABELS = { ND01: "D\u00E9butant", ND02: "Interm\u00E9diaire", ND03: "Avanc\u00E9", ND04: "Expert" };
+  const SKILL_LEVEL_BADGE_CLASSES = { ND01: "badge", ND02: "badge access", ND03: "badge closed", ND04: "badge closed" };
+
+  // "Caracteristiques" badges: river-style flags (shown only when truthy)
+  // plus two free-text fields shown as-is when present. Each gets a
+  // "category" so the badges can be color-coded by group in the sheet.
+  // Coded values for DUREE_WEB -> display label.
+  const DUREE_WEB_LABELS = {
+    SITE: "Site de pratique",
+    LAPS: "Laps",
+    TWDY: "Twice a day",
+    WHLD: "Whole day",
+    OVNG: "Overnight",
+    MULT: "Multiday"
+  };
+
+  const CHARACTERISTIC_FIELDS = [
+    { field: "PERIOD_PAGAY", type: "text", category: "period" },
+    { field: "DUREE_WEB", type: "coded", labels: DUREE_WEB_LABELS, category: "duree" },
+    { field: "CREEKING", type: "flag", label: "Creeking", category: "style" },
+    { field: "BIG_WATER", type: "flag", label: "Big water", category: "style" },
+    { field: "CONTINUOUS", type: "flag", label: "Continu", category: "style" },
+    { field: "POOL_DROP", type: "flag", label: "Pool-drop", category: "style" },
+    { field: "PLAYBOATING", type: "flag", label: "Playboating", category: "style" }
+  ];
+
+  // A live débit within this fraction of DEBIT_OPT counts as "optimal"
+  // rather than just "praticable" (+/- 10%, as requested).
+  const OPTIMAL_TOLERANCE = 0.10;
+
+  const FLOW_STATUS_LABELS = {
+    optimal: "Debit optimal",
+    praticable: "Praticable",
+    "trop-bas": "Trop bas",
+    "niveau-eleve": "Niveau eleve"
+  };
+
+  // (icons removed per feedback - labels are plain text now)
 
   // ===================================================================
   // MAP INITIALIZATION
@@ -381,7 +653,7 @@
     spiderfyOnMaxZoom: true,
     showCoverageOnHover: false,
     zoomToBoundsOnClick: true,
-    maxClusterRadius: 50,
+    maxClusterRadius: 25,
     iconCreateFunction: uniformClusterIcon
   });
   const lineLayerGroup = L.layerGroup();
@@ -402,11 +674,15 @@
   const siteListEl = document.getElementById("siteList");
   const siteCountEl = document.getElementById("siteCount");
   const searchBoxEl = document.getElementById("searchBox");
+  const infoPanelEl = document.getElementById("infoPanel");
+  const infoPanelContentEl = infoPanelEl.querySelector(".info-panel-content");
+  const infoPanelCloseEl = infoPanelEl.querySelector(".info-panel-close");
 
   let allSites = [];              // every site loaded from the feature service
   let regionMap = new Map();      // région code -> array of sites in it
   let regionLabels = {};          // région code -> display name
   let adminRegions = [];          // { code, name, feature, boundaryLayer } per région
+  let hydroStationsMap = new Map(); // normalized station number -> { debit, niveau, dateUtc }
   let activeItemEl = null;        // currently highlighted <div> in the sidebar list
   let activeRegionCode = null;    // région currently selected/filtered (or null)
   let hoveredRegionCode = null;   // région currently hovered in the sidebar (or null)
@@ -434,28 +710,289 @@
   // ===================================================================
   // POPUP / LIST HTML BUILDERS — the section name/badges shown to users.
   // ===================================================================
-  function statusBadgeClass(code) {
-    if (code === "F") return "badge closed";
-    if (code === "E") return "badge access";
-    return "badge";
+
+  // Case-insensitive property lookup: falls back to scanning the actual
+  // key names when the exact-case field name isn't present, in case a
+  // column's casing differs slightly from what's configured above.
+  function getPropCI(props, fieldName) {
+    if (Object.prototype.hasOwnProperty.call(props, fieldName)) return props[fieldName];
+    const target = fieldName.toLowerCase();
+    for (const key in props) {
+      if (key.toLowerCase() === target) return props[key];
+    }
+    return undefined;
   }
 
-  function buildPopupHtml(props) {
-    const name = props.NOM || props.NOM_PLN_EAU || "Section sans nom";
-    let html = '<div class="simple-popup">';
-    html += '<div class="popup-title">' + name + '</div>';
-    if (props.DIFF_WWG) {
-      html += '<div class="popup-row"><b>Cote de difficulte:</b> ' + props.DIFF_WWG + '</div>';
-    }
-    if (props.LONGU) {
-      html += '<div class="popup-row"><b>Longueur:</b> ' + Number(props.LONGU).toFixed(1) + ' km</div>';
-    }
-    if (props.ETAT_SECTN && STATUS_LABELS[props.ETAT_SECTN]) {
-      html += '<div class="popup-row"><b>Statut:</b> ' + STATUS_LABELS[props.ETAT_SECTN] + '</div>';
-    }
+  // Loosely interprets whatever truthy convention the source data uses for
+  // its boolean-style columns (1/0, oui/non, true/false, etc.).
+  function isFlagTruthy(value) {
+    if (value === null || value === undefined) return false;
+    if (typeof value === "number") return value !== 0;
+    if (typeof value === "boolean") return value;
+    const s = String(value).trim().toLowerCase();
+    if (s === "") return false;
+    return ["0", "non", "no", "false", "n", "aucun"].indexOf(s) === -1;
+  }
+
+  // Builds the "Caracteristiques" section (river-style badges), placed
+  // before Hydrologie. Returns "" (section omitted entirely) when none of
+  // the configured fields have a value to show.
+  function buildCharacteristicsHtml(props) {
+    const badges = [];
+    CHARACTERISTIC_FIELDS.forEach(function (cfg) {
+      const raw = getPropCI(props, cfg.field);
+      if (cfg.type === "flag") {
+        if (isFlagTruthy(raw)) badges.push({ label: cfg.label, category: cfg.category });
+      } else if (cfg.type === "coded") {
+        if (raw !== null && raw !== undefined && String(raw).trim() !== "") {
+          const code = String(raw).trim();
+          badges.push({ label: cfg.labels[code] || code, category: cfg.category });
+        }
+      } else if (raw !== null && raw !== undefined && String(raw).trim() !== "") {
+        // Free-text fields (PERIOD_PAGAY) are shown verbatim, in full - no
+        // shortening of the source value.
+        badges.push({ label: String(raw).trim(), category: cfg.category });
+      }
+    });
+    if (badges.length === 0) return "";
+
+    let html = '<div class="sheet-divider"></div>';
+    html += '<div class="sheet-section-title">Caracteristiques</div>';
+    html += '<div class="sheet-badges">';
+    badges.forEach(function (b) {
+      html += '<span class="badge characteristic-' + b.category + '">' + b.label + '</span>';
+    });
     html += '</div>';
     return html;
   }
+
+  // ===================================================================
+  // HYDROLOGY — live débit lookup + comparison against the section's
+  // DEBIT_MIN / DEBIT_OPT / DEBIT_MAX thresholds.
+  // ===================================================================
+
+  // CEHQ-style station numbers are zero-padded to 6 digits (e.g. "051005"),
+  // but some providers in the same feed use other formats (e.g. Environment
+  // Canada's "02OJ007"). Only pad when the code is purely numeric, and
+  // always compare on a normalized value so "51005" and "051005" match.
+  function normalizeStationCode(code) {
+    if (code === null || code === undefined) return null;
+    const trimmed = String(code).trim();
+    if (!trimmed) return null;
+    if (/^\d+$/.test(trimmed)) return trimmed.padStart(6, "0");
+    return trimmed.toUpperCase();
+  }
+
+  function numOrNull(value) {
+    if (value === null || value === undefined || value === "") return null;
+    const n = Number(value);
+    return isFinite(n) ? n : null;
+  }
+
+  // Compares a live débit to whatever thresholds the section actually has.
+  // Any of min/opt/max can be missing (no significant minimum/maximum, or
+  // an unknown optimum) - the comparison degrades gracefully:
+  //   - within +/-10% of DEBIT_OPT              -> "optimal"
+  //   - below DEBIT_MIN                          -> "trop-bas"
+  //   - above DEBIT_MAX                          -> "niveau-eleve"
+  //   - otherwise, if at least one threshold      -> "praticable"
+  //     was available to check against
+  //   - no thresholds at all to compare against  -> null (unclassified)
+  function classifyFlowStatus(value, min, opt, max) {
+    if (typeof value !== "number" || !isFinite(value)) return null;
+
+    if (typeof opt === "number" && opt > 0 && Math.abs(value - opt) <= opt * OPTIMAL_TOLERANCE) {
+      return "optimal";
+    }
+    if (typeof min === "number" && value < min) return "trop-bas";
+    if (typeof max === "number" && value > max) return "niveau-eleve";
+    if (typeof min === "number" || typeof max === "number" || typeof opt === "number") {
+      return "praticable";
+    }
+    return null;
+  }
+
+  function flowBadgeClass(status) {
+    if (status === "optimal") return "badge optimal";
+    if (status === "trop-bas" || status === "niveau-eleve") return "badge closed";
+    return "badge";
+  }
+
+  function formatHydroDate(isoUtc) {
+    try {
+      return new Date(isoUtc).toLocaleString("fr-CA", {
+        timeZone: "America/Toronto",
+        dateStyle: "short",
+        timeStyle: "short"
+      });
+    } catch (e) {
+      return isoUtc;
+    }
+  }
+
+  // Builds the "Hydrologie" section of the info sheet: the live débit at
+  // the section's station, how it stacks up against DEBIT_MIN/OPT/MAX, and
+  // when that reading was taken. Falls back to a placeholder whenever a
+  // station isn't known, unreachable, or reports no débit at all.
+  function formatFlowNumber(n) {
+    return (Math.round(n * 10) / 10).toString();
+  }
+
+  // Renders a min-max bar for the débit, with the optimal zone (if known)
+  // highlighted and a round pointer marking the current live value. Only
+  // drawn when both DEBIT_MIN and DEBIT_MAX are known - that's what gives
+  // the bar its two ends; with either missing there's nothing solid to
+  // anchor a scale to, so the caller falls back to plain text instead.
+  function buildFlowGaugeHtml(min, opt, max, value, status) {
+    if (min === null || max === null || max <= min) return "";
+
+    function pct(v) {
+      return Math.max(0, Math.min(100, ((v - min) / (max - min)) * 100));
+    }
+
+    let optZoneHtml = "";
+    let optTickHtml = "";
+    let optLabelHtml = "";
+    if (opt !== null) {
+      const zoneLowPct = pct(opt - opt * OPTIMAL_TOLERANCE);
+      const zoneHighPct = pct(opt + opt * OPTIMAL_TOLERANCE);
+      optZoneHtml = '<div class="flow-gauge-optimal-zone" style="left:' + zoneLowPct.toFixed(1) + '%; width:' + Math.max(0, zoneHighPct - zoneLowPct).toFixed(1) + '%;"></div>';
+
+      const optPct = pct(opt);
+      optTickHtml = '<div class="flow-gauge-tick tick-opt" style="left:' + optPct.toFixed(1) + '%;"></div>';
+      optLabelHtml = '<div class="flow-gauge-tick-label" style="left:' + optPct.toFixed(1) + '%; transform:translateX(-50%);">Opt ' + formatFlowNumber(opt) + '</div>';
+    }
+
+    const pointerColor = status === "optimal" ? "#185fa5" : ((status === "trop-bas" || status === "niveau-eleve") ? "#a32d2d" : "#3b6d11");
+    const valuePct = pct(value);
+
+    let html = '<div class="flow-gauge">';
+    // Arrow marking the live débit, pointing down onto the track.
+    html += '<div class="flow-gauge-arrow" style="left:' + valuePct.toFixed(1) + '%; border-top-color:' + pointerColor + ';"></div>';
+    html += '<div class="flow-gauge-track">' + optZoneHtml + '</div>';
+    // Ticks + labels for the three thresholds: min and max sit at the
+    // track's ends, opt (when known) at its computed position in between.
+    html += '<div class="flow-gauge-tick" style="left:0%;"></div>';
+    html += optTickHtml;
+    html += '<div class="flow-gauge-tick" style="left:100%;"></div>';
+    html += '<div class="flow-gauge-tick-label" style="left:0%; transform:translateX(0%);">Min ' + formatFlowNumber(min) + '</div>';
+    html += optLabelHtml;
+    html += '<div class="flow-gauge-tick-label" style="left:100%; transform:translateX(-100%);">Max ' + formatFlowNumber(max) + '</div>';
+    html += '</div>';
+    return html;
+  }
+
+  function buildHydrologyHtml(props) {
+    const station = hydroStationsMap.get(normalizeStationCode(props.STAT_HYDRO));
+    const debit = station ? numOrNull(station.debit) : null;
+
+    let html = '<div class="sheet-section-title">Hydrologie</div>';
+
+    if (debit === null) {
+      html += '<div class="sheet-hydro-placeholder">Aucune donnee sur les debits</div>';
+      return html;
+    }
+
+    const min = numOrNull(props.DEBIT_MIN);
+    const opt = numOrNull(props.DEBIT_OPT);
+    const max = numOrNull(props.DEBIT_MAX);
+    const status = classifyFlowStatus(debit, min, opt, max);
+
+    // Value and practicability on the same line, so they read as one fact.
+    html += '<div class="sheet-flow-line">';
+    html += '<span class="sheet-flow-value">' + debit.toFixed(2) + ' m' + '\u00B3' + '/s</span>';
+    if (status) {
+      html += '<span class="' + flowBadgeClass(status) + '">' + FLOW_STATUS_LABELS[status] + '</span>';
+    }
+    html += '</div>';
+
+    const gaugeHtml = buildFlowGaugeHtml(min, opt, max, debit, status);
+    if (gaugeHtml) {
+      html += gaugeHtml;
+    } else {
+      const thresholdParts = [];
+      if (min !== null) thresholdParts.push("min " + min);
+      if (opt !== null) thresholdParts.push("opt " + opt);
+      if (max !== null) thresholdParts.push("max " + max);
+      if (thresholdParts.length > 0) {
+        html += '<div class="sheet-hydro-thresholds">Seuils (m' + '\u00B3' + '/s) : ' + thresholdParts.join(" / ") + '</div>';
+      }
+    }
+
+    if (station.dateUtc) {
+      html += '<div class="sheet-hydro-updated">Mise a jour : ' + formatHydroDate(station.dateUtc) + '</div>';
+    }
+
+    return html;
+  }
+
+  function buildPopupHtml(site) {
+    const props = site.properties;
+    const name = props.NOM || props.NOM_PLN_EAU || "Section sans nom";
+    const river = props.NOM_PLN_EAU || "";
+    const region = regionLabels[site._regionCode] || "Region non determinee";
+    const skillCode = getPropCI(props, SKILL_LEVEL_FIELD);
+    const skillLabel = skillCode ? (SKILL_LEVEL_LABELS[skillCode] || skillCode) : null;
+
+    let html = '<div class="sheet">';
+
+    // Header band: section name as title; plan d'eau as subtitle with the
+    // skill-level badge to its right - on its own contrasting background
+    // so it reads as a title bar rather than blending into the sheet.
+    html += '<div class="sheet-header">';
+    html += '<div class="sheet-title">' + name + '</div>';
+    if (river || skillLabel) {
+      html += '<div class="sheet-subtitle-row">';
+      html += '<span class="sheet-subtitle">' + river + '</span>';
+      if (skillLabel) {
+        html += '<span class="' + (SKILL_LEVEL_BADGE_CLASSES[skillCode] || "badge optimal") + '">' + skillLabel + '</span>';
+      }
+      html += '</div>';
+    }
+    html += '</div>';
+
+    html += '<div class="sheet-content">';
+
+    // Body: key characteristics as label/value rows.
+    html += '<div class="sheet-body">';
+    html += '<div class="sheet-row"><span class="sheet-label">Region</span><span class="sheet-value">' + region + '</span></div>';
+    if (props.DIFF_WWG) {
+      html += '<div class="sheet-row"><span class="sheet-label">Classe</span><span class="sheet-value">' + props.DIFF_WWG + '</span></div>';
+    }
+    if (props.LONGU) {
+      html += '<div class="sheet-row"><span class="sheet-label">Longueur</span><span class="sheet-value">' + Number(props.LONGU).toFixed(1) + ' km</span></div>';
+    }
+    html += '</div>';
+
+    html += buildCharacteristicsHtml(props);
+
+    html += '<div class="sheet-divider"></div>';
+    html += buildHydrologyHtml(props);
+
+    html += '</div>'; // .sheet-content
+    html += '</div>'; // .sheet
+    return html;
+  }
+
+  function showInfoPanel(site) {
+    infoPanelContentEl.innerHTML = buildPopupHtml(site);
+    infoPanelEl.classList.add("visible");
+  }
+
+  function hideInfoPanel() {
+    infoPanelEl.classList.remove("visible");
+  }
+
+  infoPanelCloseEl.addEventListener("click", function (e) {
+    e.stopPropagation();
+    deselectSite();
+  });
+
+  // Prevent clicks inside the panel (e.g. selecting text) from bubbling to
+  // the map and triggering deselectSite().
+  infoPanelEl.addEventListener("click", function (e) {
+    e.stopPropagation();
+  });
 
   function siteItemHtml(site) {
     const props = site.properties;
@@ -463,13 +1000,13 @@
     const river = props.NOM_PLN_EAU || "";
     const diff = props.DIFF_WWG || "";
     const length = props.LONGU;
-    const statusCode = props.ETAT_SECTN;
-    const statusLabel = STATUS_LABELS[statusCode] || "";
+    const skillCode = getPropCI(props, SKILL_LEVEL_FIELD);
+    const skillLabel = skillCode ? (SKILL_LEVEL_LABELS[skillCode] || skillCode) : "";
 
     let metaHtml = "";
     if (river) metaHtml += "<span>" + river + "</span>";
     if (length) metaHtml += "<span>" + Number(length).toFixed(1) + " km</span>";
-    if (statusLabel) metaHtml += '<span class="' + statusBadgeClass(statusCode) + '">' + statusLabel + "</span>";
+    if (skillLabel) metaHtml += '<span class="' + (SKILL_LEVEL_BADGE_CLASSES[skillCode] || "badge optimal") + '">' + skillLabel + "</span>";
 
     const nameHtml = name + (diff ? ' <span class="badge">' + diff + "</span>" : "");
 
@@ -598,7 +1135,7 @@
 
   function deselectSite() {
     clearHighlight();
-    map.closePopup();
+    hideInfoPanel();
     if (activeItemEl) {
       activeItemEl.classList.remove("active");
       activeItemEl = null;
@@ -835,7 +1372,7 @@
     }
   }
 
-  function focusSite(site, popupLatLng) {
+  function focusSite(site) {
     if (!searchQuery && site._regionCode !== activeRegionCode) {
       activeRegionCode = site._regionCode;
       refreshDisplay();
@@ -858,12 +1395,9 @@
     const bounds = boundsForLine(site);
     flyToBoundsSafe(bounds, { padding: [80, 80], maxZoom: 15 });
 
-    // Same popup content/behavior regardless of whether the marker, the
-    // polyline, or the sidebar list item triggered the selection.
-    L.popup()
-      .setLatLng(popupLatLng || bounds.getCenter())
-      .setContent(buildPopupHtml(site.properties))
-      .openOn(map);
+    // Same info-sheet content/behavior regardless of whether the marker,
+    // the polyline, or the sidebar list item triggered the selection.
+    showInfoPanel(site);
   }
 
   // ===================================================================
@@ -932,12 +1466,38 @@
     return fetch(queryUrl).then(function (res) { return res.json(); });
   }
 
+  // Fetches the public real-time hydrometric feed (all providers, all of
+  // Quebec) once at startup and indexes it by normalized station number,
+  // so each info-sheet lookup afterwards is just a Map.get(). Non-fatal if
+  // it fails or times out - sections just show "Aucune donnee sur les
+  // debits" instead of live hydrology.
+  function fetchHydroStations() {
+    return fetch(HYDRO_STATIONS_URL)
+      .then(function (res) { return res.json(); })
+      .then(function (geojson) {
+        hydroStationsMap = new Map();
+        (geojson.features || []).forEach(function (f) {
+          const code = normalizeStationCode(f.properties && f.properties.station);
+          if (!code) return;
+          hydroStationsMap.set(code, {
+            debit: f.properties.dern_valeur_deb,
+            niveau: f.properties.dern_valeur_niv,
+            dateUtc: f.properties.dern_date_prise_valeur_utc
+          });
+        });
+      })
+      .catch(function (err) {
+        console.error("Impossible de charger les donnees hydrometriques en temps reel:", err);
+        hydroStationsMap = new Map();
+      });
+  }
+
   function withTimeout(promise, ms) {
     return Promise.race([
       promise,
       new Promise(function (resolve) {
         setTimeout(function () {
-          console.warn("Les regions administratives mettent trop de temps a repondre, poursuite sans elles.");
+          console.warn("Une source de donnees met trop de temps a repondre, poursuite sans elle.");
           resolve();
         }, ms);
       })
@@ -950,9 +1510,13 @@
   // Wrapped so that if map-only display code fails, the sidebar list
   // (already rendered) still stays usable.
   // ===================================================================
-  Promise.all([withTimeout(fetchAdminRegions(), 6000), fetchSites()])
+  Promise.all([
+    withTimeout(fetchAdminRegions(), 6000),
+    withTimeout(fetchHydroStations(), 8000),
+    fetchSites()
+  ])
     .then(function (results) {
-      const geojson = results[1];
+      const geojson = results[2];
       allSites = geojson.features || [];
 
       allSites.forEach(function (site) {
@@ -991,7 +1555,7 @@
           site._line.bindTooltip(siteName, { sticky: true });
           site._line.on("click", function (e) {
             L.DomEvent.stopPropagation(e);
-            focusSite(site, e.latlng);
+            focusSite(site);
           });
           site._line.on("mouseover", function () {
             showHoverHighlight(site);
@@ -1006,7 +1570,7 @@
           site._marker.bindTooltip(siteName);
           site._marker.on("click", function (e) {
             L.DomEvent.stopPropagation(e);
-            focusSite(site, midLatLng);
+            focusSite(site);
           });
           site._marker.on("mouseover", function () {
             showHoverHighlight(site);
